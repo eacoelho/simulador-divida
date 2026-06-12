@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador CPR Financeira</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
+
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: 'IBM Plex Sans', sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ──────────────────────────────── */
+#sidebar {
+  width: 270px;
+  min-width: 270px;
+  background: #161b22;
+  border-right: 1px solid #21262d;
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+#sidebar h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.0rem;
+  color: #58a6ff;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+.sec-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #8b949e;
+  font-family: 'IBM Plex Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 10px 0 6px;
+}
+
+.divider { border-top: 1px solid #21262d; margin: 10px 0; }
+
+.pg { margin-bottom: 6px; }
+.pg label {
+  display: block;
+  font-size: 0.68rem;
+  color: #8b949e;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 3px;
+}
+.pg input[type="number"] {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #e6edf3;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  -moz-appearance: textfield;
+}
+.pg input[type="number"]::-webkit-outer-spin-button,
+.pg input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.pg input[type="number"]:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 2px rgba(88,166,255,.15);
+}
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+.s-info {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: #8b949e;
+  margin: 4px 0;
+}
+.s-info .val { font-weight: 700; display: block; margin-top: 2px; font-size: 0.88rem; }
+
+.chk-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.chk-row label { font-size: 0.74rem; color: #c9d1d9; font-family: 'IBM Plex Mono', monospace; cursor: pointer; }
+.chk-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: #58a6ff; cursor: pointer; flex-shrink: 0; }
+
+/* ── MAIN ─────────────────────────────────── */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+#app-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.5rem;
+  color: #58a6ff;
+  font-weight: 600;
+}
+#app-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  color: #8b949e;
+  margin: 2px 0 14px;
+}
+
+/* Header boxes */
+.hdr-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.hdr-box {
+  flex: 1;
+  min-width: 88px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.70rem;
+  color: #8b949e;
+}
+.hdr-box span { font-weight: 700; display: block; margin-top: 3px; font-size: 0.80rem; }
+
+/* Scenario row */
+.sec-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.cen-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.cen-ctrl .pg input[type="number"] { background: #161b22; }
+.fx-display {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: #8b949e;
+  margin-top: 6px;
+  border-left-width: 3px;
+}
+.fx-display .fxv { font-weight: 700; font-size: 1.0rem; display: block; margin-top: 2px; }
+
+/* Tabs */
+.tabs-nav {
+  display: flex;
+  gap: 3px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  color: #8b949e;
+  background: none;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-top: 2px solid transparent;
+  transition: color .15s;
+}
+.tab-btn:hover { color: #c9d1d9; }
+.tab-btn.active { background: #0d1117; color: #58a6ff; border-top-color: #58a6ff; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Tab 1 — 3-col grid */
+.cen-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Option cards */
+.op-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 7px;
+}
+.op-card-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.67rem; color: #8b949e; margin-bottom: 3px; }
+.op-card-vf  { font-family: 'IBM Plex Mono', monospace; font-size: 0.92rem; font-weight: 700; }
+.op-card-ext { font-family: 'IBM Plex Mono', monospace; font-size: 0.67rem; color: #8b949e; margin: 2px 0; }
+.op-card-foot {
+  border-top: 1px solid #21262d;
+  padding-top: 5px;
+  margin-top: 5px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.op-card-foot span { font-size: 0.67rem; color: #8b949e; }
+.op-card-foot .v { font-family: 'IBM Plex Mono', monospace; font-size: 0.70rem; }
+.winner-badge {
+  background: #1f3a1f; border: 1px solid #2ea043; color: #56d364;
+  padding: 1px 6px; border-radius: 4px;
+  font-size: 0.62rem; font-family: 'IBM Plex Mono', monospace; font-weight: 700; margin-left: 6px;
+}
+.cap-badge {
+  background: #2d1a1a; border: 1px solid #da3633; color: #ff7b72;
+  padding: 1px 5px; border-radius: 4px;
+  font-size: 0.62rem; font-family: 'IBM Plex Mono', monospace; font-weight: 700;
+}
+
+/* Tab 2 */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.chart-sec h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  color: #56d364;
+  margin-bottom: 6px;
+}
+
+/* Tab 3 */
+.premissas {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  color: #8b949e;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+.premissas b { color: #e6edf3; }
+
+.t3-h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  color: #56d364;
+  margin: 14px 0 8px;
+}
+.t3-h4 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.80rem;
+  color: #8b949e;
+  margin: 10px 0 6px;
+}
+.tbl-wrap { border: 1px solid #21262d; border-radius: 6px; overflow: hidden; margin-bottom: 14px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 0.74rem; }
+thead th {
+  background: #161b22;
+  color: #8b949e;
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #30363d;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+tbody td { padding: 7px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #161b22; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════ -->
+<aside id="sidebar">
+  <h2>Parâmetros</h2>
+
+  <div class="sec-title">Principal e Câmbio</div>
+
+  <div class="pg">
+    <label for="principal_usd">Principal (USD)</label>
+    <input type="number" id="principal_usd" value="1000000" min="10000" max="100000000" step="10000">
+  </div>
+  <div class="pg">
+    <label for="cambio_desembolso">Câmbio desembolso (R$/USD)</label>
+    <input type="number" id="cambio_desembolso" value="5.0000" min="1" max="30" step="0.01">
+  </div>
+  <div class="pg">
+    <label for="prazo_dias">Prazo (dias corridos)</label>
+    <input type="number" id="prazo_dias" value="365" min="30" max="1825" step="1">
+  </div>
+  <div class="s-info">Principal BRL<span id="sb-brl" class="val" style="color:#58a6ff;">—</span></div>
+
+  <div class="divider"></div>
+
+  <div class="pg">
+    <label for="cdi_aa">CDI referência (% a.a.)</label>
+    <input type="number" id="cdi_aa" value="13.75" min="0" max="100" step="0.25">
+  </div>
+
+  <div class="divider"></div>
+  <div class="sec-title">Taxas — Opções 1–4</div>
+
+  <div class="two-col">
+    <div class="pg"><label for="taxa_pre">Op1 Pré %</label>
+      <input type="number" id="taxa_pre" value="18.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="spread_cdi">Op2 CDI+ %</label>
+      <input type="number" id="spread_cdi" value="3.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="spread_vc3">Op3 VC+ %</label>
+      <input type="number" id="spread_vc3" value="9.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="spread_vc4">Op4 VC+ %</label>
+      <input type="number" id="spread_vc4" value="8.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="taxa_pre4">Op4 Pré %</label>
+      <input type="number" id="taxa_pre4" value="8.00" min="0" max="100" step="0.25"></div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="sec-title">Opções 5–6 com CAP</div>
+
+  <div class="two-col">
+    <div class="pg"><label for="taxa_pre5">Op5 Pré %</label>
+      <input type="number" id="taxa_pre5" value="12.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="spread_cdi6">Op6 CDI+ %</label>
+      <input type="number" id="spread_cdi6" value="2.00" min="0" max="100" step="0.25"></div>
+    <div class="pg"><label for="cap_fx5">Op5 CAP R$</label>
+      <input type="number" id="cap_fx5" value="6.00" min="1" max="30" step="0.05"></div>
+    <div class="pg"><label for="cap_fx6">Op6 CAP R$</label>
+      <input type="number" id="cap_fx6" value="6.00" min="1" max="30" step="0.05"></div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="sec-title">Opções ativas</div>
+
+  <div class="chk-row"><input type="checkbox" id="chk_op1" checked><label for="chk_op1">Op 1 · Pré BRL</label></div>
+  <div class="chk-row"><input type="checkbox" id="chk_op2" checked><label for="chk_op2">Op 2 · CDI+ BRL</label></div>
+  <div class="chk-row"><input type="checkbox" id="chk_op3" checked><label for="chk_op3">Op 3 · VC+ USD</label></div>
+  <div class="chk-row"><input type="checkbox" id="chk_op4" checked><label for="chk_op4">Op 4 · Duplo Indexador</label></div>
+  <div class="chk-row"><input type="checkbox" id="chk_op5" checked><label for="chk_op5">Op 5 · Pré + CAP</label></div>
+  <div class="chk-row"><input type="checkbox" id="chk_op6" checked><label for="chk_op6">Op 6 · CDI++ CAP</label></div>
+</aside>
+
+<!-- ═══ MAIN ══════════════════════════════════ -->
+<main id="main">
+  <div id="app-title">Simulador CPR Financeira</div>
+  <div id="app-sub">6 estruturas de dívida · 3 cenários cambiais</div>
+
+  <!-- Header info boxes -->
+  <div class="hdr-row">
+    <div class="hdr-box">Principal USD<span id="h-usd" style="color:#58a6ff;">—</span></div>
+    <div class="hdr-box">Câmbio<span id="h-fx" style="color:#e3b341;">—</span></div>
+    <div class="hdr-box">Principal BRL<span id="h-brl" style="color:#56d364;">—</span></div>
+    <div class="hdr-box">Prazo<span id="h-prazo" style="color:#d2a8ff;">—</span></div>
+    <div class="hdr-box">CDI ref.<span id="h-cdi" style="color:#79c0ff;">—</span></div>
+    <div class="hdr-box">Opções<span id="h-ops" style="color:#ff9f43;">—</span></div>
+  </div>
+
+  <!-- Scenario % inputs -->
+  <div class="sec-label">Cenários de Câmbio</div>
+  <div class="cen-row">
+    <div class="cen-ctrl">
+      <div class="pg"><label for="pct_q">Queda (%)</label>
+        <input type="number" id="pct_q" value="-10" min="-90" max="200" step="1"></div>
+      <div class="fx-display" style="border-left-color:#56d364;">
+        Câmbio Queda<span id="fx-q" class="fxv" style="color:#56d364;">—</span>
+      </div>
+    </div>
+    <div class="cen-ctrl">
+      <div class="pg"><label for="pct_b">Base (%)</label>
+        <input type="number" id="pct_b" value="0" min="-90" max="200" step="1"></div>
+      <div class="fx-display" style="border-left-color:#e3b341;">
+        Câmbio Base<span id="fx-b" class="fxv" style="color:#e3b341;">—</span>
+      </div>
+    </div>
+    <div class="cen-ctrl">
+      <div class="pg"><label for="pct_a">Alta (%)</label>
+        <input type="number" id="pct_a" value="10" min="-90" max="200" step="1"></div>
+      <div class="fx-display" style="border-left-color:#f85149;">
+        Câmbio Alta<span id="fx-a" class="fxv" style="color:#f85149;">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" data-tab="tab1">Cenários Comparativos</button>
+    <button class="tab-btn"        data-tab="tab2">Gráficos</button>
+    <button class="tab-btn"        data-tab="tab3">Detalhamento</button>
+  </nav>
+
+  <div id="tab1" class="tab-panel active">
+    <div id="t1" class="cen-grid"></div>
+  </div>
+
+  <div id="tab2" class="tab-panel">
+    <div class="charts-row">
+      <div class="chart-sec"><h3>VF Total (BRL)</h3><div id="c-vf" style="height:420px;"></div></div>
+      <div class="chart-sec"><h3>CET — Custo Efetivo (%)</h3><div id="c-cet" style="height:420px;"></div></div>
+    </div>
+    <div class="chart-sec"><h3>Juros (BRL)</h3><div id="c-juros" style="height:420px;margin-bottom:12px;"></div></div>
+    <div id="c-cap"></div>
+  </div>
+
+  <div id="tab3" class="tab-panel">
+    <div id="t3"></div>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+// ── META ──────────────────────────────────────
+const META = {
+  op1: { label:'Op 1 · Pré BRL',   short:'Pré BRL',   color:'#56d364' },
+  op2: { label:'Op 2 · CDI+ BRL',  short:'CDI+',      color:'#79c0ff' },
+  op3: { label:'Op 3 · VC+ USD',   short:'VC+ USD',   color:'#e3b341' },
+  op4: { label:'Op 4 · Duplo Idx', short:'Duplo Idx', color:'#d2a8ff' },
+  op5: { label:'Op 5 · Pré+CAP',   short:'Pré+CAP',   color:'#ff9f43' },
+  op6: { label:'Op 6 · CDI++CAP',  short:'CDI++CAP',  color:'#ff6b9d' },
+};
+const CEN_COLS = ['#56d364','#e3b341','#f85149'];
+
+// ── FORMATAÇÃO ───────────────────────────────
+const LC = 'pt-BR';
+const fBRL = v => 'R$ ' + v.toLocaleString(LC,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fPCT = v => v.toLocaleString(LC,{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+const fUSD = v => 'USD ' + v.toLocaleString(LC,{minimumFractionDigits:2,maximumFractionDigits:2});
+const f4   = v => v.toLocaleString(LC,{minimumFractionDigits:4,maximumFractionDigits:4});
+const f2   = v => v.toLocaleString(LC,{minimumFractionDigits:2,maximumFractionDigits:2});
+const f6   = v => v.toLocaleString(LC,{minimumFractionDigits:6,maximumFractionDigits:6});
+const fInt = v => v.toLocaleString(LC,{maximumFractionDigits:0});
+
+// ── CÁLCULOS ─────────────────────────────────
+const dcToDu = dc => Math.round(dc * 252 / 365);
+const pow    = (b,e) => Math.pow(b, e);
+
+function calc(s, fxFinal) {
+  const { principal_brl: vp, du, dc, taxa_pre, spread_cdi, cdi_aa,
+          spread_vc3, spread_vc4, taxa_pre4, taxa_pre5, cap_fx5,
+          spread_cdi6, cap_fx6, principal_usd } = s;
+  const res = {};
+
+  const vf1 = vp * pow(1 + taxa_pre/100, du/252);
+  res.op1 = { vf_brl:vf1, vf_usd:null, juros_brl:vf1-vp, extra:null };
+
+  const vf2 = vp * pow(1+cdi_aa/100,du/252) * pow(1+spread_cdi/100,du/252);
+  res.op2 = { vf_brl:vf2, vf_usd:null, juros_brl:vf2-vp, extra:null };
+
+  const vf3u = principal_usd * (1 + (spread_vc3/100)*(dc/360));
+  const vf3  = vf3u * fxFinal;
+  res.op3 = { vf_brl:vf3, vf_usd:vf3u, juros_brl:vf3-vp, extra:null };
+
+  const preU = principal_usd * pow(1+taxa_pre4/100,du/252);
+  const vcU  = principal_usd * (1 + (spread_vc4/100)*(dc/360));
+  const preB = preU * fxFinal, vcB = vcU * fxFinal;
+  if (vcB >= preB) {
+    res.op4 = { vf_brl:vcB, vf_usd:vcU, juros_brl:vcB-vp,
+      extra:{ dominante:'VC+Spread', pre_brl:preB, vc_brl:vcB, pre_usd:preU, vc_usd:vcU }};
+  } else {
+    res.op4 = { vf_brl:preB, vf_usd:preU, juros_brl:preB-vp,
+      extra:{ dominante:'Pre', pre_brl:preB, vc_brl:vcB, pre_usd:preU, vc_usd:vcU }};
+  }
+
+  const jp5 = vp*(pow(1+taxa_pre5/100,du/252)-1);
+  const cc5 = vp*Math.max(0,fxFinal/cap_fx5-1);
+  res.op5 = { vf_brl:vp+jp5+cc5, vf_usd:null, juros_brl:jp5+cc5,
+    extra:{ juros_pre:jp5, corr_cambial:cc5, cap_ativado:fxFinal>cap_fx5, cap_fx:cap_fx5 }};
+
+  const jc6 = vp*(pow(1+cdi_aa/100,du/252)*pow(1+spread_cdi6/100,du/252)-1);
+  const cc6 = vp*Math.max(0,fxFinal/cap_fx6-1);
+  res.op6 = { vf_brl:vp+jc6+cc6, vf_usd:null, juros_brl:jc6+cc6,
+    extra:{ juros_cdi:jc6, corr_cambial:cc6, cap_ativado:fxFinal>cap_fx6, cap_fx:cap_fx6 }};
+
+  return res;
+}
+
+// ── STATE ────────────────────────────────────
+function getState() {
+  const g   = id => +document.getElementById(id).value;
+  const pu  = g('principal_usd');
+  const cd  = g('cambio_desembolso');
+  const pd  = Math.max(30, Math.min(1825, g('prazo_dias')));
+  const pq  = g('pct_q'), pb = g('pct_b'), pa = g('pct_a');
+  const ops = ['op1','op2','op3','op4','op5','op6'].filter(k=>document.getElementById('chk_'+k).checked);
+  const s = {
+    principal_usd:pu, cambio_desembolso:cd, prazo_dias:pd,
+    principal_brl:pu*cd, du:dcToDu(pd), dc:pd,
+    cdi_aa:g('cdi_aa'), taxa_pre:g('taxa_pre'), spread_cdi:g('spread_cdi'),
+    spread_vc3:g('spread_vc3'), spread_vc4:g('spread_vc4'), taxa_pre4:g('taxa_pre4'),
+    taxa_pre5:g('taxa_pre5'), cap_fx5:g('cap_fx5'),
+    spread_cdi6:g('spread_cdi6'), cap_fx6:g('cap_fx6'),
+    pct_q:pq, pct_b:pb, pct_a:pa,
+    fx_q:cd*(1+pq/100), fx_b:cd*(1+pb/100), fx_a:cd*(1+pa/100),
+    opcoes_ativas:ops,
+  };
+  s.cenarios   = { Queda:s.fx_q, Base:s.fx_b, Alta:s.fx_a };
+  s.resultados = Object.fromEntries(Object.entries(s.cenarios).map(([n,fx])=>[n,calc(s,fx)]));
+  return s;
+}
+
+// ── TABS ─────────────────────────────────────
+let activeTab = 'tab1', S = null;
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.tab;
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    activeTab = id;
+    if (S) { if (id==='tab2') renderCharts(S); if (id==='tab3') renderTab3(S); }
+  });
+});
+
+// ── PLOTLY BASE ──────────────────────────────
+const LAY = {
+  plot_bgcolor:'#0d1117', paper_bgcolor:'#161b22',
+  font:{ family:'IBM Plex Mono', color:'#c9d1d9', size:13 },
+  legend:{ bgcolor:'#0d1117', bordercolor:'#30363d', borderwidth:1, font:{size:13} },
+  margin:{ t:50, b:40, l:75, r:24 },
+};
+const AX = { gridcolor:'#21262d', linecolor:'#30363d', tickfont:{size:12,family:'IBM Plex Mono'} };
+
+// ── RENDER HEADER ────────────────────────────
+function renderHeader(s) {
+  document.getElementById('sb-brl').textContent   = fBRL(s.principal_brl);
+  document.getElementById('h-usd').textContent    = 'USD ' + fInt(s.principal_usd);
+  document.getElementById('h-fx').textContent     = 'R$ ' + f4(s.cambio_desembolso);
+  document.getElementById('h-brl').textContent    = fBRL(s.principal_brl);
+  document.getElementById('h-prazo').textContent  = s.dc + ' d.c. / ' + s.du + ' d.u.';
+  document.getElementById('h-cdi').textContent    = f2(s.cdi_aa) + '% a.a.';
+  document.getElementById('h-ops').textContent    = s.opcoes_ativas.length + ' / 6 ativas';
+  document.getElementById('fx-q').textContent = 'R$ ' + f4(s.fx_q);
+  document.getElementById('fx-b').textContent = 'R$ ' + f4(s.fx_b);
+  document.getElementById('fx-a').textContent = 'R$ ' + f4(s.fx_a);
+}
+
+// ── RENDER TAB 1 ─────────────────────────────
+function renderTab1(s) {
+  const ativos = s.opcoes_ativas;
+  const cols   = Object.entries(s.cenarios).map(([nome, fx], i) => {
+    const res    = s.resultados[nome];
+    const cor    = CEN_COLS[i];
+    const varPct = (fx / s.cambio_desembolso - 1) * 100;
+    const sinal  = varPct < 0 ? '▼' : Math.abs(varPct) < 0.01 ? '=' : '▲';
+    const varD   = Math.abs(varPct).toLocaleString(LC,{minimumFractionDigits:1,maximumFractionDigits:1});
+
+    let html = `<div>
+      <div style="background:linear-gradient(135deg,#161b22,#1a2030);border:1px solid #21262d;
+                  border-top:3px solid ${cor};border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:#e6edf3;font-size:1.0rem;">${nome}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;color:${cor};font-size:0.88rem;font-weight:700;margin-top:2px;">
+          R$ ${f4(fx)}
+          <span style="font-size:0.72rem;margin-left:8px;color:#8b949e;">${sinal} ${varD}%</span>
+        </div>
+      </div>`;
+
+    if (!ativos.length) { html += '</div>'; return html; }
+    const menorK = ativos.reduce((a,b) => res[a].vf_brl < res[b].vf_brl ? a : b);
+
+    for (const key of ativos) {
+      const r  = res[key], m = META[key];
+      const vf = r.vf_brl, jur = r.juros_brl;
+      const ce = (vf / s.principal_brl - 1) * 100;
+      const isMenor = key === menorK;
+      const bdr  = isMenor ? '#2ea043' : '#21262d';
+      const bdrL = isMenor ? '#2ea043' : m.color;
+      const win  = isMenor ? `<span class="winner-badge">✓ MENOR</span>` : '';
+
+      let ext = '';
+      if (r.vf_usd !== null)
+        ext += `<div class="op-card-ext">${fUSD(r.vf_usd)}</div>`;
+      if (key==='op4' && r.extra) {
+        const dc4 = r.extra.dominante==='VC+Spread' ? '#56d364' : '#79c0ff';
+        ext += `<div class="op-card-ext" style="color:${dc4};">↳ ${r.extra.dominante}</div>`;
+      }
+      if ((key==='op5'||key==='op6') && r.extra) {
+        const capD = f2(r.extra.cap_fx);
+        if (r.extra.cap_ativado) {
+          ext += `<div style="margin:2px 0;"><span class="cap-badge">▲ CAP R$${capD} ativo</span>
+            <span style="color:#ff7b72;font-size:0.67rem;font-family:'IBM Plex Mono',monospace;"> corr: ${fBRL(r.extra.corr_cambial)}</span></div>`;
+        } else {
+          ext += `<div class="op-card-ext">CAP R$${capD} inativo</div>`;
+        }
+      }
+
+      html += `
+        <div class="op-card" style="border-color:${bdr};border-left-color:${bdrL};">
+          <div class="op-card-lbl">${m.label}${win}</div>
+          <div class="op-card-vf" style="color:${m.color};">${fBRL(vf)}</div>
+          ${ext}
+          <div class="op-card-foot">
+            <span>Juros: <span class="v" style="color:#f85149;">${fBRL(jur)}</span></span>
+            <span>CET: <span class="v" style="color:#e3b341;font-weight:700;">${fPCT(ce)}</span></span>
+          </div>
+        </div>`;
+    }
+    html += '</div>';
+    return html;
+  });
+  document.getElementById('t1').innerHTML = cols.join('');
+}
+
+// ── RENDER CHARTS ────────────────────────────
+function renderCharts(s) {
+  const ativos   = s.opcoes_ativas;
+  const cenNames = Object.keys(s.cenarios);
+  const res      = s.resultados;
+  if (!ativos.length) return;
+
+  // VF Total
+  Plotly.react('c-vf', ativos.map(k=>({
+    type:'bar', name:META[k].short, x:cenNames,
+    y:cenNames.map(c=>res[c][k].vf_brl),
+    marker:{ color:META[k].color, line:{color:'#0d1117',width:1} },
+    text:cenNames.map(c=>'R$'+(res[c][k].vf_brl/1e6).toLocaleString(LC,{minimumFractionDigits:2,maximumFractionDigits:2})+'M'),
+    textposition:'outside', textfont:{family:'IBM Plex Mono',size:11,color:'#e6edf3'},
+  })), { ...LAY, barmode:'group', height:420,
+    xaxis:{...AX}, yaxis:{...AX,tickformat:',.0f',title:{text:'BRL',font:{size:13}}} },
+  { responsive:true });
+
+  // CET
+  Plotly.react('c-cet', ativos.map(k=>({
+    type:'scatter', mode:'lines+markers+text', name:META[k].short, x:cenNames,
+    y:cenNames.map(c=>(res[c][k].vf_brl/s.principal_brl-1)*100),
+    line:{color:META[k].color,width:2.5},
+    marker:{size:9,color:META[k].color,line:{color:'#0d1117',width:1.5}},
+    text:cenNames.map(c=>fPCT((res[c][k].vf_brl/s.principal_brl-1)*100)),
+    textposition:'top center', textfont:{family:'IBM Plex Mono',size:11,color:META[k].color},
+  })), { ...LAY, height:420,
+    xaxis:{...AX}, yaxis:{...AX,ticksuffix:'%',title:{text:'CET (%)',font:{size:13}}} },
+  { responsive:true });
+
+  // Juros
+  Plotly.react('c-juros', ativos.map(k=>({
+    type:'bar', name:META[k].short, x:cenNames,
+    y:cenNames.map(c=>res[c][k].juros_brl),
+    marker:{ color:META[k].color, line:{color:'#0d1117',width:1} },
+    text:cenNames.map(c=>'R$'+(res[c][k].juros_brl/1e3).toLocaleString(LC,{minimumFractionDigits:0,maximumFractionDigits:0})+'k'),
+    textposition:'outside', textfont:{family:'IBM Plex Mono',size:11,color:'#e6edf3'},
+  })), { ...LAY, barmode:'group', height:420,
+    xaxis:{...AX}, yaxis:{...AX,tickformat:',.0f',title:{text:'Juros (BRL)',font:{size:13}}},
+    legend:{...LAY.legend,orientation:'h',yanchor:'bottom',y:1.02},
+    margin:{t:64,b:40,l:75,r:24} },
+  { responsive:true });
+
+  // CAP decomposition
+  const capKeys = ['op5','op6'].filter(k=>ativos.includes(k));
+  const capEl   = document.getElementById('c-cap');
+  if (!capKeys.length) { capEl.innerHTML=''; return; }
+
+  capEl.innerHTML = capKeys.map(k=>`
+    <div class="chart-sec">
+      <h3 style="margin-top:16px;">${META[k].label} — Decomposição CAP</h3>
+      <div id="c-cap-${k}" style="height:320px;margin-bottom:12px;"></div>
+    </div>`).join('');
+
+  capKeys.forEach(key => {
+    const m   = META[key];
+    const jf  = key==='op5' ? 'juros_pre' : 'juros_cdi';
+    const trJ = { type:'bar', name:'Juros taxa',          x:[], y:[], legendgroup:'t', marker:{color:m.color,   line:{color:'#0d1117',width:1}} };
+    const trC = { type:'bar', name:'Corr. cambial (CAP)', x:[], y:[], legendgroup:'c', marker:{color:'#ff7b72', line:{color:'#0d1117',width:1}} };
+    cenNames.forEach(c => {
+      const ext = res[c][key].extra;
+      trJ.x.push(c); trJ.y.push(ext[jf]);
+      trC.x.push(c); trC.y.push(ext.corr_cambial);
+    });
+    Plotly.react('c-cap-'+key, [trJ,trC], { ...LAY, barmode:'stack', height:320,
+      xaxis:{...AX}, yaxis:{...AX,tickformat:',.0f',title:{text:'BRL',font:{size:13}}} },
+    { responsive:true });
+  });
+}
+
+// ── RENDER TAB 3 ─────────────────────────────
+function renderTab3(s) {
+  const res = s.resultados;
+  let h = '';
+
+  h += `<div class="premissas">
+    <b>Premissas</b><br>
+    Principal USD: ${fInt(s.principal_usd)} &nbsp;·&nbsp; Câmbio: R$ ${f4(s.cambio_desembolso)}
+    &nbsp;·&nbsp; Principal BRL: ${fBRL(s.principal_brl)}<br>
+    Prazo: ${s.dc} d.c. / ~${s.du} d.u. &nbsp;·&nbsp; CDI: ${f2(s.cdi_aa)}% a.a.
+  </div>`;
+
+  for (const [nome, fx] of Object.entries(s.cenarios)) {
+    h += `<h4 class="t3-h4">${nome} · Câmbio R$ ${f4(fx)}</h4>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Opção</th><th>Fórmula</th><th>Fator / Detalhe</th><th>VF USD</th><th>VF BRL</th><th>Juros BRL</th><th>CET</th></tr></thead>
+      <tbody>`;
+
+    for (const key of s.opcoes_ativas) {
+      const r  = res[nome][key];
+      const m  = META[key];
+      const vf = r.vf_brl, ce = (vf/s.principal_brl-1)*100;
+      let formula='', fator='', vfU='—';
+
+      if (key==='op1') {
+        formula = `VP*(1+${f2(s.taxa_pre)}%)^(${s.du}/252)`;
+        fator   = f6(pow(1+s.taxa_pre/100, s.du/252));
+      } else if (key==='op2') {
+        formula = `VP*(1+CDI)^(du/252)*(1+${f2(s.spread_cdi)}%)^(du/252)`;
+        fator   = f6(pow(1+s.cdi_aa/100,s.du/252)*pow(1+s.spread_cdi/100,s.du/252));
+      } else if (key==='op3') {
+        formula = `USD*(1+${f2(s.spread_vc3)}%*${s.dc}/360)*FX`;
+        fator   = f6(1+(s.spread_vc3/100)*(s.dc/360));
+        vfU     = fUSD(r.vf_usd);
+      } else if (key==='op4') {
+        const e = r.extra;
+        formula = `max(Pré ${f2(s.taxa_pre4)}% exp/252; VC+${f2(s.spread_vc4)}% lin/360)*FX`;
+        fator   = `dom: ${e.dominante} | pré: ${fUSD(e.pre_usd)} | vc: ${fUSD(e.vc_usd)}`;
+        vfU     = fUSD(r.vf_usd);
+      } else if (key==='op5') {
+        const e = r.extra;
+        formula = `VP*(1+${f2(s.taxa_pre5)}%)^(du/252) + VP*max(0,FX/CAP-1)`;
+        fator   = `juros: ${fBRL(e.juros_pre)} | corr: ${fBRL(e.corr_cambial)} | CAP R$${f2(s.cap_fx5)}: ${e.cap_ativado?'ATIVO':'INATIVO'}`;
+      } else if (key==='op6') {
+        const e = r.extra;
+        formula = `VP*(1+CDI)^(du/252)*(1+${f2(s.spread_cdi6)}%)^(du/252) + VP*max(0,FX/CAP-1)`;
+        fator   = `juros: ${fBRL(e.juros_cdi)} | corr: ${fBRL(e.corr_cambial)} | CAP R$${f2(s.cap_fx6)}: ${e.cap_ativado?'ATIVO':'INATIVO'}`;
+      }
+
+      h += `<tr>
+        <td style="color:${m.color};">${m.label}</td>
+        <td style="font-size:0.70rem;">${formula}</td>
+        <td style="font-size:0.68rem;color:#8b949e;">${fator}</td>
+        <td>${vfU}</td>
+        <td style="font-weight:600;">${fBRL(vf)}</td>
+        <td style="color:#f85149;">${fBRL(r.juros_brl)}</td>
+        <td style="color:#e3b341;font-weight:700;">${fPCT(ce)}</td>
+      </tr>`;
+    }
+    h += `</tbody></table></div>`;
+  }
+
+  // Resumo consolidado
+  h += `<h3 class="t3-h3">Resumo Consolidado</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Cenário</th><th>FX Final</th><th>Var. FX</th><th>Opção</th><th>VF (BRL)</th><th>Juros (BRL)</th><th>CET</th><th>CAP</th></tr></thead>
+    <tbody>`;
+
+  for (const [nome, fx] of Object.entries(s.cenarios)) {
+    const varFx = (fx/s.cambio_desembolso-1)*100;
+    const varS  = (varFx>=0?'+':'') + varFx.toLocaleString(LC,{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+    for (const key of s.opcoes_ativas) {
+      const r  = res[nome][key];
+      const ce = (r.vf_brl/s.principal_brl-1)*100;
+      let cap  = '—';
+      if ((key==='op5'||key==='op6')&&r.extra) cap = r.extra.cap_ativado ? 'ATIVO' : 'INATIVO';
+      h += `<tr>
+        <td>${nome}</td>
+        <td>R$ ${f2(fx)}</td>
+        <td style="color:${varFx<0?'#56d364':'#f85149'};">${varS}</td>
+        <td style="color:${META[key].color};">${META[key].label}</td>
+        <td style="font-weight:600;">${fBRL(r.vf_brl)}</td>
+        <td style="color:#f85149;">${fBRL(r.juros_brl)}</td>
+        <td style="color:#e3b341;font-weight:700;">${fPCT(ce)}</td>
+        <td style="color:${cap==='ATIVO'?'#ff7b72':'#8b949e'};">${cap}</td>
+      </tr>`;
+    }
+  }
+  h += `</tbody></table></div>`;
+  document.getElementById('t3').innerHTML = h;
+}
+
+// ── MAIN RENDER ──────────────────────────────
+function render() {
+  S = getState();
+  renderHeader(S);
+  renderTab1(S);
+  if (activeTab==='tab2') renderCharts(S);
+  if (activeTab==='tab3') renderTab3(S);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', render));
+  render();
+});
+</script>
+</body>
+</html>
